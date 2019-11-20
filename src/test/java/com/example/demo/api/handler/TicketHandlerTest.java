@@ -1,12 +1,10 @@
 package com.example.demo.api.handler;
 
-import com.example.demo.api.annotation.TicketController;
 import com.example.demo.api.model.Ticket;
 import com.example.demo.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -29,12 +27,15 @@ class TicketHandlerTest {
     TicketRoute route = new TicketRoute(repository);
     webClient = WebTestClient.bindToRouterFunction(route.route()).build();
   }
-  
+
   @Test
   public void testCreateTicket() {
-    Ticket ticket = Ticket.builder().id(1L).title("test").description("some description").build();
+    Ticket ticket = Ticket.builder().title("test").description("some description").build();
+    Ticket expectedTicket =
+        Ticket.builder().id(8L).title("test").description("some description").build();
 
-    Mockito.when(repository.save(ticket)).thenReturn(Mono.just(ticket));
+    Mockito.when(repository.save(expectedTicket)).thenReturn(Mono.just(expectedTicket));
+    Mockito.when(repository.count()).thenReturn(Mono.just(8L));
 
     webClient
         .post()
@@ -45,7 +46,7 @@ class TicketHandlerTest {
         .expectStatus()
         .isCreated();
 
-    Mockito.verify(repository).save(ticket);
+    Mockito.verify(repository).save(expectedTicket);
   }
 
   @Test
@@ -69,12 +70,7 @@ class TicketHandlerTest {
   void testGetTicketByIdNotFound() {
     Mockito.when(repository.findById(1L)).thenReturn(Mono.empty());
 
-    webClient
-        .get()
-        .uri(uri + "/1")
-        .exchange()
-        .expectStatus()
-        .isNotFound();
+    webClient.get().uri(uri + "/1").exchange().expectStatus().isNotFound();
   }
 
   @Test
