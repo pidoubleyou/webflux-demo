@@ -1,6 +1,7 @@
 package com.example.demo.api.handler;
 
 import com.example.demo.api.model.Ticket;
+import com.example.demo.repository.TicketEntity;
 import com.example.demo.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,9 +17,10 @@ import reactor.core.publisher.Mono;
 @WebFluxTest
 class TicketHandlerTest {
 
-  private static final String uri = "/v2/tickets";
+  private static final String TICKET_URI = "/v2/tickets";
 
-  @MockBean private TicketRepository repository;
+  @MockBean
+  private TicketRepository repository;
 
   private WebTestClient webClient;
 
@@ -31,66 +33,66 @@ class TicketHandlerTest {
   @Test
   public void testCreateTicket() {
     Ticket ticket = Ticket.builder().title("test").description("some description").build();
-    Ticket expectedTicket =
-        Ticket.builder().id(8L).title("test").description("some description").build();
+    TicketEntity createdTicketEntity = TicketEntity.builder().id(9L).title("test").description("some description").build();
 
-    Mockito.when(repository.save(expectedTicket)).thenReturn(Mono.just(expectedTicket));
-    Mockito.when(repository.count()).thenReturn(Mono.just(8L));
+    Mockito.when(repository.count()).thenReturn(Mono.just(9L));
+    Mockito.when(repository.save(createdTicketEntity)).thenReturn(Mono.just(createdTicketEntity));
 
     webClient
-        .post()
-        .uri(uri)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body(BodyInserters.fromValue(ticket))
-        .exchange()
-        .expectStatus()
-        .isCreated();
+      .post()
+      .uri(TICKET_URI)
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(BodyInserters.fromValue(ticket))
+      .exchange()
+      .expectStatus()
+      .isCreated();
 
-    Mockito.verify(repository).save(expectedTicket);
+    Mockito.verify(repository).save(createdTicketEntity);
   }
 
   @Test
   void testGetTicketByIdFound() {
-    Ticket ticket = Ticket.builder().id(1L).build();
-    Mockito.when(repository.findById(1L)).thenReturn(Mono.just(ticket));
+    Ticket expectedTicket = Ticket.builder().id(1L).build();
+    TicketEntity ticketEntity = TicketEntity.builder().id(1L).build();
+    Mockito.when(repository.findById(1L)).thenReturn(Mono.just(ticketEntity));
 
     webClient
-        .get()
-        .uri(uri + "/1")
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectHeader()
-        .contentType(MediaType.APPLICATION_JSON)
-        .expectBodyList(Ticket.class)
-        .contains(ticket);
+      .get()
+      .uri(TICKET_URI + "/1")
+      .exchange()
+      .expectStatus()
+      .isOk()
+      .expectHeader()
+      .contentType(MediaType.APPLICATION_JSON)
+      .expectBodyList(Ticket.class)
+      .contains(expectedTicket);
   }
 
   @Test
   void testGetTicketByIdNotFound() {
     Mockito.when(repository.findById(1L)).thenReturn(Mono.empty());
 
-    webClient.get().uri(uri + "/1").exchange().expectStatus().isNotFound();
+    webClient.get().uri(TICKET_URI + "/1").exchange().expectStatus().isNotFound();
   }
 
   @Test
   void testGetTickets() {
-    Ticket[] tickets =
-        new Ticket[] {Ticket.builder().id(1L).build(), Ticket.builder().id(2L).build()};
-    Mockito.when(repository.findAll()).thenReturn(Flux.fromArray(tickets));
+    TicketEntity[] ticketEntities =
+      new TicketEntity[]{TicketEntity.builder().id(1L).build(), TicketEntity.builder().id(2L).build()};
+    Mockito.when(repository.findAll()).thenReturn(Flux.fromArray(ticketEntities));
 
     Ticket[] expected =
-        new Ticket[] {Ticket.builder().id(1L).build(), Ticket.builder().id(2L).build()};
+      new Ticket[]{Ticket.builder().id(1L).build(), Ticket.builder().id(2L).build()};
 
     webClient
-        .get()
-        .uri(uri)
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectHeader()
-        .contentType(MediaType.APPLICATION_JSON)
-        .expectBodyList(Ticket.class)
-        .contains(expected);
+      .get()
+      .uri(TICKET_URI)
+      .exchange()
+      .expectStatus()
+      .isOk()
+      .expectHeader()
+      .contentType(MediaType.APPLICATION_JSON)
+      .expectBodyList(Ticket.class)
+      .contains(expected);
   }
 }
